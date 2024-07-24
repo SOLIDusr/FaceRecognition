@@ -1,9 +1,9 @@
 from deepface import DeepFace as dface
 import cv2 as cv
 import asyncio
+from collections import deque
 
-
-async def frameAnalyze(frame, antiSpoofing: bool):
+async def frameAnalyze(frame: cv.typing.MatLike, antiSpoofing: bool) -> list:
     frame_resized = cv.resize(frame, (320, 240))
     try:
         faces = dface.analyze(frame_resized, actions=("emotion"), enforce_detection=False, anti_spoofing=antiSpoofing)
@@ -19,28 +19,37 @@ async def frameAnalyze(frame, antiSpoofing: bool):
         facesData.append([(x, y), (x + w, y + h), face["dominant_emotion"]])
     return facesData
 
-async def stream(capture, antiSpoofing):
+def getMostPopular(emotions: deque) -> str:
+    if not emotions:
+        return "None"
+    counts = {}
+    for emotion in emotions:
+        counts[emotion] = counts.get(emotion, 0) + 1
+    return max(counts, key=counts.get)
+
+async def stream(capture: cv.VideoCapture, antiSpoofing: bool) -> None:
     count = 0
-    rectData = [[(0, 0), (0, 0), "None"]]
+    boxData = [(0, 0), (0, 0), "None"]
+    emotionArray = deque(maxlen=10)
     while capture:
-        count += 1
         ret, frame = capture.read()
         if not ret:
             break
+        count += 1
         if count % 5 == 0:
-            collected = await frameAnalyze(frame, antiSpoofing)
-            if not collected:
-                rectData = [[(0, 0), (0, 0), "None"]]
-            else: rectData = collected
-        for face in rectData:
-            frame = cv.rectangle(frame, face[0], face[1], (255, 0, 0), 2)
-            frame = cv.putText(frame, f"{face[2]}", (face[0][0], face[0][1]-10), cv.FONT_HERSHEY_SIMPLEX, 0.9, (255,0,0), 2)
+            facesData = await frameAnalyze(frame, antiSpoofing)
+            if not facesData:
+                boxData = [(0, 0), (0, 0), "None"]
+            else:
+                boxData = facesData[0]
+                emotionArray.append(boxData[2])
+        frame = cv.rectangle(frame, boxData[0], boxData[1], (255, 0, 0), 2)
+        frame = cv.putText(frame, getMostPopular(emotionArray), (boxData[0][0], boxData[0][1]-10), cv.FONT_HERSHEY_SIMPLEX, 0.9, (255,0,0), 2)
         cv.imshow("result", frame)
         if cv.waitKey(1) == ord('q'):
             break
 
-
-def main():
+def main() -> None:
     antiSpoofing = False
     cap = cv.VideoCapture(0)
     if not cap.isOpened():
@@ -51,7 +60,6 @@ def main():
     finally:
         cap.release()
         cv.destroyAllWindows()
-
 
 if __name__ == "__main__":
     main()
