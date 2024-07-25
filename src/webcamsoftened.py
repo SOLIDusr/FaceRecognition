@@ -4,6 +4,15 @@ import asyncio
 from collections import deque
 
 async def frameAnalyze(frame: cv.typing.MatLike, antiSpoofing: bool) -> list:
+    """analyze given frame with async
+
+    Args:
+        frame (cv.typing.MatLike): frame
+        antiSpoofing (bool): Weather use spoof protection or not
+
+    Returns:
+        list: list with faces data from deepface
+    """
     frame_resized = cv.resize(frame, (320, 240))
     try:
         faces = dface.analyze(frame_resized, actions=("emotion"), enforce_detection=False, anti_spoofing=antiSpoofing)
@@ -28,6 +37,12 @@ def getMostPopular(emotions: deque) -> str:
     return max(counts, key=counts.get)
 
 async def stream(capture: cv.VideoCapture, antiSpoofing: bool) -> None:
+    """facial recognition stream
+
+    Args:
+        capture (cv.VideoCapture): Video capture from webcam
+        antiSpoofing (bool): Weather use spoof protection or not
+    """
     count = 0
     boxData = [(0, 0), (0, 0), "None"]
     emotionArray = deque(maxlen=10)
@@ -50,14 +65,19 @@ async def stream(capture: cv.VideoCapture, antiSpoofing: bool) -> None:
             break
 
 def main() -> None:
+    # set anti spoofing
     antiSpoofing = False
+    # start capture from the video given
     cap = cv.VideoCapture(0)
+    # if capture closed -> exit
     if not cap.isOpened():
         print("Cannot open camera")
         exit()
     try:
+        # try runnung async stream
         asyncio.run(stream(cap, antiSpoofing))
     finally:
+        # end program
         cap.release()
         cv.destroyAllWindows()
 

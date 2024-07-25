@@ -10,6 +10,14 @@ executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
 
 
 async def frameAnalyze(frame: cv.typing.MatLike) -> list:
+    """analyze given frame with async
+
+    Args:
+        frame (cv.typing.MatLike): frame
+
+    Returns:
+        list: list with faces data from deepface
+    """
     frame_resized = cv.resize(frame, (320, 240))
     try:
         faces = dface.analyze(frame_resized, actions=("emotion"), enforce_detection=False)
@@ -36,6 +44,11 @@ def getMostPopular(emotions: deque) -> str:
 
 
 async def videoStream(cap: cv.VideoCapture) -> None:
+    """facial recognition stream
+
+    Args:
+        capture (cv.VideoCapture): Video capture from video
+    """
     count = 0
     boxData = [(0, 0), (0, 0), "None"]
     emotionArray = deque(maxlen=5)
@@ -60,14 +73,19 @@ async def videoStream(cap: cv.VideoCapture) -> None:
 
 
 def main() -> None:
+    # start capture from the video given
     cap = cv.VideoCapture('src/randomhappy.mp4')
+    # set capture framerate to 30 fps
     cap.set(cv.CAP_PROP_FPS, 30)
+    # if capture closed -> exit
     if not cap.isOpened():
         print("Cannot open camera")
         exit()
     try:
+        # try runnung async stream
         asyncio.run(videoStream(cap=cap))
     finally:
+        # end program
         cap.release()
         cv.destroyAllWindows()
 

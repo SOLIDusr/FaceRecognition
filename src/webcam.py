@@ -4,6 +4,15 @@ import asyncio
 
 
 async def frameAnalyze(frame: cv.typing.MatLike, antiSpoofing: bool) -> list:
+    """analyze given frame with async
+
+    Args:
+        frame (cv.typing.MatLike): frame
+        antiSpoofing (bool): Weather use spoof protection or not
+
+    Returns:
+        list: list with faces data from deepface
+    """
     frame_resized = cv.resize(frame, (320, 240))
     try:
         faces = dface.analyze(frame_resized, actions=("emotion"), enforce_detection=False, anti_spoofing=antiSpoofing)
@@ -19,7 +28,13 @@ async def frameAnalyze(frame: cv.typing.MatLike, antiSpoofing: bool) -> list:
         facesData.append([(x, y), (x + w, y + h), face["dominant_emotion"]])
     return facesData
 
-async def stream(capture: cv.VideoCapture, antiSpoofing: bool) -> None:
+async def stream(capture: cv.VideoCapture,  antiSpoofing: bool) -> None:
+    """facial recognition stream
+
+    Args:
+        capture (cv.VideoCapture): Video capture from webcam
+        antiSpoofing (bool): Weather use spoof protection or not
+    """
     count = 0
     boxData = [[(0, 0), (0, 0), "None"]]
     while capture:
@@ -41,14 +56,19 @@ async def stream(capture: cv.VideoCapture, antiSpoofing: bool) -> None:
 
 
 def main() -> None:
+    # set anti spoofing
     antiSpoofing = False
+    # start capture from the video given
     cap = cv.VideoCapture(0)
+    # if capture closed -> exit
     if not cap.isOpened():
         print("Cannot open camera")
         exit()
     try:
+        # try runnung async stream
         asyncio.run(stream(cap, antiSpoofing))
     finally:
+        # end program
         cap.release()
         cv.destroyAllWindows()
 
