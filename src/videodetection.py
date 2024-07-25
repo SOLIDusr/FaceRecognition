@@ -68,18 +68,18 @@ async def videoStream(cap: cv.VideoCapture) -> None:
         frame = cv.rectangle(frame, boxData[0], boxData[1], (255, 0, 0), 2)
         frame = cv.putText(frame, getMostPopular(emotionArray), (boxData[0][0], boxData[0][1]-10), cv.FONT_HERSHEY_SIMPLEX, 0.9, (255,0,0), 2)
         cv.imshow("result", frame)
-        if cv.waitKey(25) == ord('q'):
+        if cv.waitKey(15) == ord('q'):
             break
 
 
 def main() -> None:
     # start capture from the video given
-    cap = cv.VideoCapture('src/randomhappy.mp4')
+    cap = cv.VideoCapture('videoset/randomhappy.mp4')
     # set capture framerate to 30 fps
     cap.set(cv.CAP_PROP_FPS, 30)
     # if capture closed -> exit
     if not cap.isOpened():
-        print("Cannot open camera")
+        print("Cannot open video")
         exit()
     try:
         # try runnung async stream
